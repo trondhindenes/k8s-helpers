@@ -102,14 +102,14 @@ jobs:
     permissions:
       id-token: write
 
-   steps:
-   - name: Download build artifacts
-     uses: actions/download-artifact@v4
-     with:
-       name: python-package-distributions
-       path: dist/
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
 
-  - name: Publish to PyPI
+    - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
 
   # publish-to-testpypi:
