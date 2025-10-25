@@ -1,7 +1,7 @@
 """Main CLI entry point for k8s-utils"""
 
 import typer
-from k8s_utils.commands import podcount
+from k8s_helpers.commands import podcount
 
 app = typer.Typer(
     name="k8stools",

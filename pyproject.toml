@@ -1,5 +1,5 @@
 [project]
-name = "k8s-utils"
+name = "k8s-helpers"
 version = "0.1.0"
 description = "Collection of Kubernetes command-line utilities"
 readme = "README.md"
@@ -11,7 +11,8 @@ dependencies = [
 ]
 
 [project.scripts]
-k8sutils = "k8s_utils.main:app"
+k8sh = "k8s_helpers.main:app"
+k8s-helpers = "k8s_helpers.main:app"
 
 [tool.uv]
 package = true
