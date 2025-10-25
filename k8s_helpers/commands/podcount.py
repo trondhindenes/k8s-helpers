@@ -113,7 +113,6 @@ def podcount(
             renderable = []
             for col in row.values():
                 renderable.append(col)
-            print(renderable)
             table.add_row(*renderable)
 
         console.print()
