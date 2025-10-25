@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  pull_request: 
+  pull_request:
 
 jobs:
   get-version:
@@ -95,9 +95,9 @@ jobs:
       - get-version
     runs-on: ubuntu-latest
     if: needs.get-version.outputs.is-prerelease == 'false'
-    environment:
-      name: pypi
-      url: https://pypi.org/p/k8s-helpers
+#    environment:
+#      name: pypi
+#      url: https://pypi.org/p/k8s-helpers
     permissions:
       id-token: write
 
