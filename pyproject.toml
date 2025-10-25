@@ -12,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 k8sh = "k8s_helpers.main:app"
+k8s-helpers = "k8s_helpers.main:app"
 
 [tool.uv]
 package = true
