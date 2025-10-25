@@ -42,12 +42,8 @@ def podcount(
 
         v1 = client.CoreV1Api()
 
-        # Get all nodes
-        #console.print("[cyan]Fetching nodes...[/cyan]")
         nodes = v1.list_node(watch=False)
 
-        # Get all pods
-        #console.print("[cyan]Fetching pods...[/cyan]")
         pods = v1.list_pod_for_all_namespaces(watch=False)
 
 
@@ -104,7 +100,7 @@ def podcount(
                 label_value = node_obj.metadata.labels.get(label, "")
 
                 node_data[label] = label_value
-            node_data["Pod Count"] = str(count)
+            node_data["Pod Count"] = count
 
             table_data.append(node_data)
 
@@ -112,6 +108,8 @@ def podcount(
         for row in sorted_table_data:
             renderable = []
             for col in row.values():
+                if isinstance(col, int):
+                    col = str(col)
                 renderable.append(col)
             table.add_row(*renderable)
 
