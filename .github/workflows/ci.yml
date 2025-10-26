@@ -67,8 +67,8 @@ jobs:
 
     - name: Set version
       run: |
-        echo "Setting version to ${{ needs.get-version.outputs.version }}"
-        sed -i "s/^version = .*/version = \"${{ needs.get-version.outputs.version }}\"/" pyproject.toml
+        echo "Setting version to ${{ needs.get-version.outputs.pep440 }}"
+        sed -i "s/^version = .*/version = \"${{ needs.get-version.outputs.pep440 }}\"/" pyproject.toml
 
     - name: Build package
       run: uv build
