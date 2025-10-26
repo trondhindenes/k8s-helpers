@@ -11,8 +11,8 @@ jobs:
     name: Get Version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_version.outputs.version }}
-      is-prerelease: ${{ steps.get_version.outputs.is-prerelease }}
+      pep440: ${{ steps.get_version.outputs.pep440 }}
+      is-release: ${{ steps.get_version.outputs.isRelease }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,8 +22,7 @@ jobs:
       - name: Calculate version
         id: get_version
         uses: trondhindenes/autoversion-action@v1
-        with:
-          config-flags: 'mode=pep440'
+
 
   test:
     runs-on: ubuntu-latest
@@ -47,15 +46,6 @@ jobs:
     - name: Install dependencies
       run: uv sync
 
-#    - name: Run tests (if test directory exists)
-#      run: |
-#        if [ -d "tests" ]; then
-#          uv run pytest
-#        else
-#          echo "No tests directory found, skipping tests"
-#        fi
-#      continue-on-error: true
-
   build:
     needs:
       - test
@@ -77,8 +67,8 @@ jobs:
 
     - name: Set version
       run: |
-        echo "Setting version to ${{ needs.get-version.outputs.version }}"
-        sed -i "s/^version = .*/version = \"${{ needs.get-version.outputs.version }}\"/" pyproject.toml
+        echo "Setting version to ${{ needs.get-version.outputs.pep440 }}"
+        sed -i "s/^version = .*/version = \"${{ needs.get-version.outputs.pep440 }}\"/" pyproject.toml
 
     - name: Build package
       run: uv build
@@ -94,10 +84,7 @@ jobs:
       - build
       - get-version
     runs-on: ubuntu-latest
-    if: needs.get-version.outputs.is-prerelease == 'false'
-#    environment:
-#      name: pypi
-#      url: https://pypi.org/p/k8s-helpers
+    if: needs.get-version.outputs.is-release == 'true'
     permissions:
       id-token: write
 
@@ -110,27 +97,3 @@ jobs:
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-
-  # publish-to-testpypi:
-  #   needs:
-  #     - build
-  #     - get-version
-  #   runs-on: ubuntu-latest
-  #   #if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   environment:
-  #     name: testpypi
-  #     url: https://test.pypi.org/p/k8s-utils
-  #   permissions:
-  #     id-token: write
-
-  #   steps:
-  #   - name: Download build artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       name: python-package-distributions
-  #       path: dist/
-
-  #   - name: Publish to TestPyPI
-  #     uses: pypa/gh-action-pypi-publish@release/v1
-  #     with:
-  #       repository-url: https://test.pypi.org/legacy/
