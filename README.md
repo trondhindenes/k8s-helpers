@@ -27,7 +27,7 @@ Count non-daemonset pods per node in the current Kubernetes context.
 
 ```shell
 # Use current context
-k8sh podcount
+k8sh podcount --help
 
 # Specify a different context
 k8sh podcount --context my-context
@@ -36,7 +36,8 @@ k8sh podcount --context my-context
 k8sh podcount \
 --node-labels "eks.amazonaws.com/nodegroup" \
 --node-labels "topology.kubernetes.io/zone" \
---sort "eks.amazonaws.com/nodegroup"
+--sort "eks.amazonaws.com/nodegroup" \
+--show-taints
 ```
 
 This command:

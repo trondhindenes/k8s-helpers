@@ -82,7 +82,7 @@ def podcount(
 
         # Create a rich table for output
         table = Table(title="Non-DaemonSet Pod Count Per Node")
-        table.add_column("Node", style="cyan", no_wrap=True)
+        table.add_column("Node (spot=red)", style="cyan", no_wrap=True)
 
         if show_taints:
             table.add_column("Taints", style="cyan")
@@ -95,6 +95,7 @@ def podcount(
         table.add_column("Pod Count", style="magenta", justify="right")
 
         table_data = []
+        node_metadata = {}
 
         # Sort by node name
         for node_name in sorted(pod_count_per_node.keys()):
@@ -104,6 +105,14 @@ def podcount(
             node_data = {
                 "Node": node_obj.metadata.name,
             }
+
+            if node_obj.metadata.name not in node_metadata:
+                node_metadata[node_obj.metadata.name] = {}
+            cap_type = node_obj.metadata.labels.get('eks.amazonaws.com/capacityType')
+            node_metadata[node_obj.metadata.name]['isSpot'] = True if cap_type == 'SPOT' else False
+
+
+
 
             if show_taints:
                 node_data["Taints"] = ", ".join([f"{taint.key}: {taint.value}" for taint in node_obj.spec.taints]) if node_obj.spec.taints else ""
@@ -119,9 +128,16 @@ def podcount(
         sorted_table_data = sorted(table_data, key=lambda x: x[sort])
         for row in sorted_table_data:
             renderable = []
-            for col in row.values():
+            for i, col in enumerate(row.values()):
                 if isinstance(col, int):
                     col = str(col)
+                if i == 0:
+                    # Node name
+                    spot = node_metadata[col].get('isSpot', False)
+                    if spot:
+                        renderable.append(f"[bold red]{col}[/bold red]")
+                    else:
+                        renderable.append(col)
                 renderable.append(col)
             table.add_row(*renderable)
 
