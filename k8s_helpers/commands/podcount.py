@@ -16,15 +16,19 @@ def podcount_wrapper(
     ),
     node_labels: Optional[list[str]] = typer.Option(default=[], help="List of node labels to include"),
     sort: Optional[str] = typer.Option(
-        "Node", help="Columnt to sort by"
+        "Node", help="Column to sort by"
     ),
+    show_taints: Optional[bool] = typer.Option(
+            False, help="Show node taints"
+        ),
 ):
-    return podcount(context, node_labels, sort)
+    return podcount(context, node_labels, sort, show_taints)
 
 def podcount(
     context: str | None,
     node_labels: list[str] | None,
     sort: str = "Node",
+    show_taints: bool = False,
 ):
     """
     Count non-daemonset pods per node in the current Kubernetes context.
@@ -80,6 +84,11 @@ def podcount(
         table = Table(title="Non-DaemonSet Pod Count Per Node")
         table.add_column("Node", style="cyan", no_wrap=True)
 
+        if show_taints:
+            table.add_column("Taints", style="cyan")
+
+
+
         for label in node_labels:
             table.add_column(label, style="magenta", justify="right")
 
@@ -95,6 +104,9 @@ def podcount(
             node_data = {
                 "Node": node_obj.metadata.name,
             }
+
+            if show_taints:
+                node_data["Taints"] = ", ".join([f"{taint.key}: {taint.value}" for taint in node_obj.spec.taints]) if node_obj.spec.taints else ""
 
             for label in node_labels:
                 label_value = node_obj.metadata.labels.get(label, "")
