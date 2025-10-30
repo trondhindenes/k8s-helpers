@@ -138,7 +138,8 @@ def podcount(
                         renderable.append(f"[bold red]{col}[/bold red]")
                     else:
                         renderable.append(col)
-                renderable.append(col)
+                else:
+                    renderable.append(col)
             table.add_row(*renderable)
 
         console.print()
