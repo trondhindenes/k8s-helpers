@@ -102,6 +102,12 @@ def podcount(
             count = pod_count_per_node[node_name]
 
             node_obj = next((node for node in nodes.items if node.metadata.name == node_name), None)
+
+            try:
+                _ = node_obj.metadata.name
+            except AttributeError:
+                continue
+
             node_data = {
                 "Node": node_obj.metadata.name,
             }
@@ -151,5 +157,6 @@ def podcount(
         console.print(f"[bold]Total non-DaemonSet pods: {total_pods}[/bold]")
 
     except Exception as e:
+        raise e
         console.print(f"[red]Error: {str(e)}[/red]")
         raise typer.Exit(code=1)
