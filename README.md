@@ -45,3 +45,29 @@ This command:
 - Excludes pods managed by DaemonSets
 - Displays a table showing pod count per node
 - Shows total non-DaemonSet pod count
+
+### delpods
+
+Delete pods matching certain statuses across namespaces.
+
+```shell
+# Delete pods with specific statuses across all namespaces
+k8sh delpods --all-namespaces --status ImagePullBackOff --status CrashLoopBackOff
+
+# Preview what would be deleted (dry run)
+k8sh delpods -A --status CrashLoopBackOff --dry-run
+
+# Delete in specific namespace without confirmation
+k8sh delpods -n default --status Error --yes
+
+# Use specific context
+k8sh delpods -c my-cluster -A --status ImagePullBackOff
+```
+
+Available arguments:
+- `--all-namespaces`, `-A`: Search pods in all namespaces
+- `--namespace`, `-n`: Specify a namespace (default: current context namespace)
+- `--status`: Pod status to match (can be specified multiple times)
+- `--dry-run`: Show what would be deleted without deleting
+- `--yes`, `-y`: Skip confirmation prompt
+- `--context`, `-c`: Kubernetes context to use
