@@ -72,6 +72,9 @@ def resource_analysis_wrapper(
     context: Optional[str] = typer.Option(
         None, "--context", "-c", help="Kubernetes context to use"
     ),
+    node: Optional[str] = typer.Option(
+        None, "--node", "-n", help="Analyze a single node only (faster for large clusters)"
+    ),
     show_pods: bool = typer.Option(
         False, "--show-pods", "-p", help="Show individual pod breakdown per node"
     ),
@@ -80,11 +83,12 @@ def resource_analysis_wrapper(
     ),
 ):
     """Analyze resource consumption per node (excluding DaemonSet pods)."""
-    return resource_analysis(context, show_pods, sort)
+    return resource_analysis(context, node, show_pods, sort)
 
 
 def resource_analysis(
     context: str | None,
+    node_filter: str | None = None,
     show_pods: bool = False,
     sort: str = "node",
 ):
@@ -104,16 +108,31 @@ def resource_analysis(
         v1 = client.CoreV1Api()
         custom_api = client.CustomObjectsApi()
 
-        # Get all nodes
-        nodes = v1.list_node(watch=False)
+        # Get nodes (single node or all)
         node_info = {}
-        for node in nodes.items:
-            allocatable = node.status.allocatable or {}
-            node_info[node.metadata.name] = {
-                "cpu_allocatable": parse_cpu(allocatable.get("cpu")),
-                "mem_allocatable": parse_memory(allocatable.get("memory")),
-                "is_spot": node.metadata.labels.get("eks.amazonaws.com/capacityType") == "SPOT",
-            }
+        if node_filter:
+            try:
+                node_obj = v1.read_node(name=node_filter)
+                allocatable = node_obj.status.allocatable or {}
+                node_info[node_obj.metadata.name] = {
+                    "cpu_allocatable": parse_cpu(allocatable.get("cpu")),
+                    "mem_allocatable": parse_memory(allocatable.get("memory")),
+                    "is_spot": node_obj.metadata.labels.get("eks.amazonaws.com/capacityType") == "SPOT",
+                }
+            except client.exceptions.ApiException as e:
+                if e.status == 404:
+                    console.print(f"[red]Error: Node '{node_filter}' not found[/red]")
+                    raise typer.Exit(code=1)
+                raise
+        else:
+            nodes = v1.list_node(watch=False)
+            for node in nodes.items:
+                allocatable = node.status.allocatable or {}
+                node_info[node.metadata.name] = {
+                    "cpu_allocatable": parse_cpu(allocatable.get("cpu")),
+                    "mem_allocatable": parse_memory(allocatable.get("memory")),
+                    "is_spot": node.metadata.labels.get("eks.amazonaws.com/capacityType") == "SPOT",
+                }
 
         # Try to get pod metrics for actual usage
         pod_metrics = {}
@@ -133,8 +152,14 @@ def resource_analysis(
             # Metrics API not available
             pass
 
-        # Get all pods
-        pods = v1.list_pod_for_all_namespaces(watch=False)
+        # Get pods (filtered by node if specified)
+        if node_filter:
+            pods = v1.list_pod_for_all_namespaces(
+                field_selector=f"spec.nodeName={node_filter}",
+                watch=False
+            )
+        else:
+            pods = v1.list_pod_for_all_namespaces(watch=False)
 
         # Aggregate resources per node
         node_resources = defaultdict(lambda: {
@@ -232,7 +257,10 @@ def resource_analysis(
         has_metrics = any(r["cpu_usage"] > 0 or r["mem_usage"] > 0 for r in node_resources.values())
 
         # Create summary table
-        table = Table(title="Resource Analysis Per Node (excluding DaemonSets)")
+        title = "Resource Analysis Per Node (excluding DaemonSets)"
+        if node_filter:
+            title = f"Resource Analysis for {node_filter} (excluding DaemonSets)"
+        table = Table(title=title)
         table.add_column("Node", style="cyan", no_wrap=True)
         table.add_column("Pods", justify="right")
         if has_metrics:
