@@ -71,3 +71,37 @@ Available arguments:
 - `--dry-run`: Show what would be deleted without deleting
 - `--yes`, `-y`: Skip confirmation prompt
 - `--context`, `-c`: Kubernetes context to use
+
+### resources
+
+Analyze CPU and memory consumption per node (excluding DaemonSet pods).
+
+```shell
+# Show all nodes
+k8sh resources
+
+# Analyze single node (faster for large clusters)
+k8sh resources --node my-node-name
+
+# Include pod breakdown
+k8sh resources -p
+
+# Sort by memory requests
+k8sh resources --sort mem-req
+```
+
+Shows requests, limits, allocatable capacity, and actual usage (if metrics-server is available).
+
+### node
+
+Analyze resource waste for pods on a specific node.
+
+```shell
+# Analyze waste on a node
+k8sh node my-node-name
+
+# Sort by CPU waste
+k8sh node my-node-name --sort cpu-waste
+```
+
+Shows actual usage vs requests, with color-coded waste percentages (green=efficient, red=wasteful).
